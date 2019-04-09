@@ -97,6 +97,16 @@
 uint8_t packet[N]	= {0};	//contains the packet to send via serial
 serial::Serial ser;	//The serial object
 double lastTime = 0;	//for checking joy timeout
+//Constants associated with speed_shift
+const float LOW_SPEED = 0.3333;
+const float MID_SPEED = 0.6667;
+const float HIGH_SPEED = 1;
+const size_t N_SPEEDS = 3;
+const float SPEEDS[N_SPEEDS] = {LOW_SPEED, MID_SPEED, HIGH_SPEED};
+float speedShift = LOW_SPEED;	//Three speeds, selectable by using shift buttons, LB and RB
+size_t lastSpeedIndex = 0;
+const size_t LB = 4;		//button indecies
+const size_t RB = 5;
 
 /****Global Const********* Not used
 const uint8_t bitMask[2*N_WHEELS_ONE_SIDE] = {
@@ -114,22 +124,37 @@ const uint8_t LOOKUP_TABLE[256] =
      0
 
 ,
-     2
+     1
 
 ,
-     5
+     3
+
+,
+     4
+
+,
+     6
 
 ,
      7
 
 ,
-     9
+     8
+
+,
+    10
 
 ,
     11
 
 ,
+    12
+
+,
     14
+
+,
+    15
 
 ,
     16
@@ -138,10 +163,16 @@ const uint8_t LOOKUP_TABLE[256] =
     18
 
 ,
+    19
+
+,
     20
 
 ,
     22
+
+,
+    23
 
 ,
     24
@@ -150,34 +181,52 @@ const uint8_t LOOKUP_TABLE[256] =
     26
 
 ,
+    27
+
+,
     28
 
 ,
-    30
+    29
+
+,
+    31
 
 ,
     32
 
 ,
+    33
+
+,
     34
 
 ,
-    35
+    36
 
 ,
     37
 
 ,
+    38
+
+,
     39
+
+,
+    40
 
 ,
     41
 
 ,
-    42
+    43
 
 ,
     44
+
+,
+    45
 
 ,
     46
@@ -186,13 +235,19 @@ const uint8_t LOOKUP_TABLE[256] =
     47
 
 ,
-    49
+    48
 
 ,
     50
 
 ,
+    51
+
+,
     52
+
+,
+    53
 
 ,
     54
@@ -202,6 +257,9 @@ const uint8_t LOOKUP_TABLE[256] =
 
 ,
     56
+
+,
+    57
 
 ,
     58
@@ -219,6 +277,9 @@ const uint8_t LOOKUP_TABLE[256] =
     63
 
 ,
+    64
+
+,
     65
 
 ,
@@ -226,6 +287,9 @@ const uint8_t LOOKUP_TABLE[256] =
 
 ,
     67
+
+,
+    68
 
 ,
     69
@@ -238,6 +302,9 @@ const uint8_t LOOKUP_TABLE[256] =
 
 ,
     72
+
+,
+    73
 
 ,
     74
@@ -262,6 +329,9 @@ const uint8_t LOOKUP_TABLE[256] =
 
 ,
     81
+
+,
+    82
 
 ,
     82
@@ -297,10 +367,10 @@ const uint8_t LOOKUP_TABLE[256] =
     92
 
 ,
-    93
+    92
 
 ,
-    94
+    93
 
 ,
     94
@@ -330,9 +400,6 @@ const uint8_t LOOKUP_TABLE[256] =
    101
 
 ,
-   101
-
-,
    102
 
 ,
@@ -343,9 +410,6 @@ const uint8_t LOOKUP_TABLE[256] =
 
 ,
    104
-
-,
-   105
 
 ,
    105
@@ -366,16 +430,10 @@ const uint8_t LOOKUP_TABLE[256] =
    109
 
 ,
-   109
-
-,
    110
 
 ,
    110
-
-,
-   111
 
 ,
    111
@@ -387,16 +445,10 @@ const uint8_t LOOKUP_TABLE[256] =
    113
 
 ,
-   113
-
-,
    114
 
 ,
    114
-
-,
-   115
 
 ,
    115
@@ -411,15 +463,6 @@ const uint8_t LOOKUP_TABLE[256] =
    117
 
 ,
-   117
-
-,
-   117
-
-,
-   118
-
-,
    118
 
 ,
@@ -432,15 +475,6 @@ const uint8_t LOOKUP_TABLE[256] =
    120
 
 ,
-   120
-
-,
-   120
-
-,
-   121
-
-,
    121
 
 ,
@@ -450,19 +484,7 @@ const uint8_t LOOKUP_TABLE[256] =
    122
 
 ,
-   122
-
-,
    123
-
-,
-   123
-
-,
-   123
-
-,
-   124
 
 ,
    124
@@ -474,25 +496,10 @@ const uint8_t LOOKUP_TABLE[256] =
    125
 
 ,
-   125
-
-,
-   125
-
-,
    126
 
 ,
    126
-
-,
-   126
-
-,
-   127
-
-,
-   127
 
 ,
    127
@@ -507,15 +514,6 @@ const uint8_t LOOKUP_TABLE[256] =
    128
 
 ,
-   128
-
-,
-   129
-
-,
-   129
-
-,
    129
 
 ,
@@ -525,19 +523,7 @@ const uint8_t LOOKUP_TABLE[256] =
    130
 
 ,
-   130
-
-,
    131
-
-,
-   131
-
-,
-   131
-
-,
-   132
 
 ,
    132
@@ -547,15 +533,6 @@ const uint8_t LOOKUP_TABLE[256] =
 
 ,
    133
-
-,
-   133
-
-,
-   134
-
-,
-   134
 
 ,
    134
@@ -570,15 +547,6 @@ const uint8_t LOOKUP_TABLE[256] =
    136
 
 ,
-   136
-
-,
-   137
-
-,
-   137
-
-,
    137
 
 ,
@@ -591,16 +559,10 @@ const uint8_t LOOKUP_TABLE[256] =
    139
 
 ,
-   139
-
-,
    140
 
 ,
    140
-
-,
-   141
 
 ,
    141
@@ -612,16 +574,10 @@ const uint8_t LOOKUP_TABLE[256] =
    143
 
 ,
-   143
-
-,
    144
 
 ,
    144
-
-,
-   145
 
 ,
    145
@@ -642,9 +598,6 @@ const uint8_t LOOKUP_TABLE[256] =
    149
 
 ,
-   149
-
-,
    150
 
 ,
@@ -655,9 +608,6 @@ const uint8_t LOOKUP_TABLE[256] =
 
 ,
    152
-
-,
-   153
 
 ,
    153
@@ -687,10 +637,10 @@ const uint8_t LOOKUP_TABLE[256] =
    160
 
 ,
-   160
+   161
 
 ,
-   161
+   162
 
 ,
    162
@@ -726,6 +676,9 @@ const uint8_t LOOKUP_TABLE[256] =
    172
 
 ,
+   172
+
+,
    173
 
 ,
@@ -750,6 +703,9 @@ const uint8_t LOOKUP_TABLE[256] =
    180
 
 ,
+   181
+
+,
    182
 
 ,
@@ -762,6 +718,9 @@ const uint8_t LOOKUP_TABLE[256] =
    185
 
 ,
+   186
+
+,
    187
 
 ,
@@ -769,6 +728,9 @@ const uint8_t LOOKUP_TABLE[256] =
 
 ,
    189
+
+,
+   190
 
 ,
    191
@@ -786,6 +748,9 @@ const uint8_t LOOKUP_TABLE[256] =
    196
 
 ,
+   197
+
+,
    198
 
 ,
@@ -795,13 +760,19 @@ const uint8_t LOOKUP_TABLE[256] =
    200
 
 ,
+   201
+
+,
    202
+
+,
+   203
 
 ,
    204
 
 ,
-   205
+   206
 
 ,
    207
@@ -810,34 +781,52 @@ const uint8_t LOOKUP_TABLE[256] =
    208
 
 ,
+   209
+
+,
    210
 
 ,
-   212
+   211
 
 ,
    213
 
 ,
+   214
+
+,
    215
+
+,
+   216
 
 ,
    217
 
 ,
-   219
+   218
 
 ,
    220
 
 ,
+   221
+
+,
    222
 
 ,
-   224
+   223
+
+,
+   225
 
 ,
    226
+
+,
+   227
 
 ,
    228
@@ -846,10 +835,16 @@ const uint8_t LOOKUP_TABLE[256] =
    230
 
 ,
+   231
+
+,
    232
 
 ,
    234
+
+,
+   235
 
 ,
    236
@@ -858,22 +853,37 @@ const uint8_t LOOKUP_TABLE[256] =
    238
 
 ,
+   239
+
+,
    240
+
+,
+   242
 
 ,
    243
 
 ,
-   245
+   244
+
+,
+   246
 
 ,
    247
 
 ,
-   249
+   248
 
 ,
-   252
+   250
+
+,
+   251
+
+,
+   253
 
 ,
    255
@@ -927,6 +937,18 @@ void JoyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 {
     lastTime = ros::Time::now().toSec();	//update last time variable
 
+    //Get any speed change
+    if((msg->buttons[LB] == 1)&&(lastSpeedIndex > 0)) {
+	lastSpeedIndex--;
+        speedShift = SPEEDS[lastSpeedIndex];
+    }
+    if((msg->buttons[RB] == 1)&&(lastSpeedIndex < (N_SPEEDS-1))) {
+        lastSpeedIndex++;
+        speedShift = SPEEDS[lastSpeedIndex];
+    }
+
+    std::cout << speedShift << '\n';
+
 //    packet[DIR] = 0;    //clear packet before starting, because it makes me feel better
 //	if(msg->axes[LEFT_STICK] >= 0) packet[DIR] = DIR_R;	//Set Left Direction bits if moving forward
 //	if(msg->axes[RIGHT_STICK] >= 0) packet[DIR] = packet[DIR]|DIR_L;
@@ -934,9 +956,9 @@ void JoyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 	//	packet[L0+i] = ((float)127.5*(0.33*msg->axes[LEFT_STICK]+1));
 	//	packet[R0+i] = ((float)127.5*(0.33*msg->axes[RIGHT_STICK]+1));
 	//Using exponential lookup table instead of equasion
-		uint8_t index = ((float)127.5*(msg->axes[LEFT_STICK]+1));
+		uint8_t index = ((float)127.5*(speedShift*msg->axes[LEFT_STICK]+1));
 		packet[L0+i] = LOOKUP_TABLE[index];
-		index = ((float)127.5*(msg->axes[RIGHT_STICK]+1));
+		index = ((float)127.5*(speedShift*msg->axes[RIGHT_STICK]+1));
 		packet[R0+i] = LOOKUP_TABLE[index];
 	}
 

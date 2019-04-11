@@ -108,6 +108,12 @@ size_t lastSpeedIndex = 0;
 const size_t LB = 4;		//button indecies
 const size_t RB = 5;
 
+bool lastLBState = false;
+bool lastRBState = false;
+bool lastShiftTime = 0;
+const uint8_t SHIFT_DELAY = 1;
+
+
 /****Global Const********* Not used
 const uint8_t bitMask[2*N_WHEELS_ONE_SIDE] = {
 	DIR_L0_BIT,
@@ -938,15 +944,23 @@ void JoyCallback(const sensor_msgs::Joy::ConstPtr& msg)
     lastTime = ros::Time::now().toSec();	//update last time variable
 
     //Get any speed change
-    if((msg->buttons[LB] == 1)&&(lastSpeedIndex > 0)) {
-	lastSpeedIndex--;
-        speedShift = SPEEDS[lastSpeedIndex];
+    if((ros::Time::now().toSec() - lastShiftTime) > SHIFT_DELAY) {
+        if((msg->buttons[LB] == 1)&&(lastLBState == false)&&(lastSpeedIndex > 0)) {
+            lastLBState = true;
+            lastShiftTime = ros::Time::now().toSec();   //to capture delay
+    	    lastSpeedIndex--;
+            speedShift = SPEEDS[lastSpeedIndex];
+        }
+        else lastLBState = false;
+    
+        if((msg->buttons[RB] == 1)&&(lastRBState == false)&&(lastSpeedIndex < (N_SPEEDS-1))) {
+            lastRBState = true;
+            lastShiftTime = ros::Time::now().toSec();
+            lastSpeedIndex++;
+            speedShift = SPEEDS[lastSpeedIndex];
+        }
+        else lastRBState = false;
     }
-    if((msg->buttons[RB] == 1)&&(lastSpeedIndex < (N_SPEEDS-1))) {
-        lastSpeedIndex++;
-        speedShift = SPEEDS[lastSpeedIndex];
-    }
-
     std::cout << speedShift << '\n';
 
 //    packet[DIR] = 0;    //clear packet before starting, because it makes me feel better

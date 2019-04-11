@@ -99,10 +99,12 @@ serial::Serial ser;	//The serial object
 double lastTime = 0;	//for checking joy timeout
 //Constants associated with speed_shift
 const float LOW_SPEED = 0.3333;
+const float LOWMID_SPEED = 0.5;
 const float MID_SPEED = 0.6667;
+const float MIDHIGH_SPEED = 0.8333;
 const float HIGH_SPEED = 1;
-const size_t N_SPEEDS = 3;
-const float SPEEDS[N_SPEEDS] = {LOW_SPEED, MID_SPEED, HIGH_SPEED};
+const size_t N_SPEEDS = 5;
+const float SPEEDS[N_SPEEDS] = {LOW_SPEED, LOWMID_SPEED, MID_SPEED, MIDHIGH_SPEED, HIGH_SPEED};
 float speedShift = LOW_SPEED;	//Three speeds, selectable by using shift buttons, LB and RB
 size_t lastSpeedIndex = 0;
 const size_t LB = 4;		//button indecies
